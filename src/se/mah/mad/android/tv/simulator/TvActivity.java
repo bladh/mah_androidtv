@@ -36,21 +36,35 @@ public class TvActivity extends Activity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_tv);
 
-		/**
-		 * Define where your videos are stored.
+		/*
+		 * Define where your videos are stored. Then load them into the program.
 		 */
-
 		this.mediaPath = sdPath + "videos/";
 		loadVideos(mediaPath);
+
+		/*
+		 * Find all the views used in this program
+		 */
 		this.videoView = (VideoView) findViewById(R.id.videoView);
 		this.marker = (ImageView) findViewById(R.id.imageView1);
 		this.debugText = (TextView) findViewById(R.id.textView);
+
+		/*
+		 * Get screen specifications. This will load up the screen height, width
+		 * and calculate a ratio which we will use for picking an appropriate
+		 * marker.
+		 */
 		getScreenSpecs();
+
+		/*
+		 * Play the first video loaded.
+		 */
 		playVideo(videos[0]);
 	}
 
 	/**
-	 * Creates an array of filenames for videofiles inside the specified path.
+	 * Creates an array of videofiles inside the specified path. The File object
+	 * pretty much just stores a string with the filepath.
 	 * 
 	 * @param path
 	 *            Path to video directory
@@ -64,6 +78,12 @@ public class TvActivity extends Activity {
 		}
 	}
 
+	/**
+	 * This method will gather the specifications of the current display, the
+	 * height, width and ratio. Notice that it will do this for the display and
+	 * not the entire device screen, so this will not break in case you'd put
+	 * the TV thingie inside a fragment.
+	 */
 	private void getScreenSpecs() {
 		Display display = getWindowManager().getDefaultDisplay();
 		this.screenHeight = display.getHeight();
@@ -88,18 +108,24 @@ public class TvActivity extends Activity {
 	public void resizeMarker(int height, int width, float scale) {
 		float size = (height < width) ? height : width;
 		size *= 0.9;
-		int flingie = (int) size;
-		Toast.makeText(this, "Size: " + size + "\nFlingie: " + flingie,
+		int marker = (int) size;
+		Toast.makeText(this, "Size: " + size + "\nFlingie: " + marker,
 				Toast.LENGTH_LONG).show();
 		if (size > 0) {
-			this.marker.setMinimumHeight(flingie);
-			this.marker.setMinimumWidth(flingie);
+			this.marker.setMinimumHeight(marker);
+			this.marker.setMinimumWidth(marker);
 		} else {
 			Log.i("Tv Activity", "Trying to set the marker to invalid size: "
 					+ size);
 		}
 	}
 
+	/**
+	 * This method will simply play the selected video.
+	 * 
+	 * @param video
+	 *            File object that points to a video on your filesystem.
+	 */
 	private void playVideo(File video) {
 		if (video != null) {
 			videoView.setVideoPath(video.getPath());
@@ -118,6 +144,10 @@ public class TvActivity extends Activity {
 		return true;
 	}
 
+	/**
+	 * A simple inner class used for finding files that end with .mp4 or .avi
+	 * 
+	 */
 	class VideoFilter implements FilenameFilter {
 		public boolean accept(File dir, String filename) {
 			return (filename.endsWith(".mp4") || filename.endsWith(".avi"));
