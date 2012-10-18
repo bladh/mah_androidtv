@@ -22,14 +22,22 @@ import android.widget.VideoView;
 public class TvActivity extends Activity {
 
 	public static final String sdPath = "/mnt/sdcard/";
+	/*
+	 * The magic number is the one used to resize the markers after how large
+	 * the screen is. Currently, the markers are sized after (screen width +
+	 * screen height) * magic number.
+	 */
+	public static final float MAGICNUMBER = 0.05f;
+	private VideoView videoView;
+	private ImageView markerTL;
+	private ImageView markerBR;
+	private TextView debugText;
 	private String mediaPath;
 	private File[] videos;
-	private VideoView videoView;
-	private ImageView marker;
-	private TextView debugText;
+	private float screenRatio;
 	private int screenWidth;
 	private int screenHeight;
-	private float screenRatio;
+	private int videoIndex;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -41,14 +49,14 @@ public class TvActivity extends Activity {
 		 */
 		this.mediaPath = sdPath + "videos/";
 		loadVideos(mediaPath);
-
+		this.videoIndex = 0;
 		/*
 		 * Find all the views used in this program
 		 */
 		this.videoView = (VideoView) findViewById(R.id.videoView);
-		this.marker = (ImageView) findViewById(R.id.imageView1);
 		this.debugText = (TextView) findViewById(R.id.textView);
-
+		this.markerTL = (ImageView) findViewById(R.id.markerTL);
+		this.markerBR = (ImageView) findViewById(R.id.markerBR);
 		/*
 		 * Get screen specifications. This will load up the screen height, width
 		 * and calculate a ratio which we will use for picking an appropriate
@@ -94,31 +102,69 @@ public class TvActivity extends Activity {
 		this.debugText.setText("Display Width: " + screenWidth
 				+ "\nDisplay Height: " + screenHeight + "\nDisplay Ratio: "
 				+ screenRatio);
-		resizeMarker(screenHeight, screenWidth, screenRatio);
+
+		/*
+		 * A bigger screen naturally requires bigger markers.
+		 */
+		float lab = screenHeight + screenWidth;
+		lab *= MAGICNUMBER;
+		resizeMarkers((int) lab);
 	}
 
 	/**
-	 * This will resize the marker after whichever of height/width is the
-	 * smallest. It will then slightly scale the marker down, to keep some free
-	 * area around the border.
+	 * This method will resize the markers, maintaining aspect ratio.
 	 * 
-	 * @param size
-	 * @param scale
+	 * @param newSize
+	 *            New size for the markers
 	 */
-	public void resizeMarker(int height, int width, float scale) {
-		float size = (height < width) ? height : width;
-		size *= 0.9;
-		int marker = (int) size;
-		Toast.makeText(this, "Size: " + size + "\nFlingie: " + marker,
-				Toast.LENGTH_LONG).show();
-		if (size > 0) {
-			this.marker.setMinimumHeight(marker);
-			this.marker.setMinimumWidth(marker);
-		} else {
-			Log.i("Tv Activity", "Trying to set the marker to invalid size: "
-					+ size);
+	public void resizeMarkers(int newSize) {
+		if (this.markerTL != null && this.markerBR != null) {
+			this.markerBR.setMinimumHeight(newSize);
+			this.markerBR.setMinimumWidth(newSize);
+			this.markerTL.setMinimumHeight(newSize);
+			this.markerTL.setMinimumWidth(newSize);
 		}
 	}
+
+	/*
+	 * Media control -------------\
+	 */
+
+	public void pauseVideo() {
+		if (this.videoView != null) {
+			if (this.videoView.canPause()) {
+				this.videoView.pause();
+			}
+		}
+	}
+
+	public void resumeVideo() {
+		if (this.videoView != null) {
+			this.videoView.resume();
+		}
+	}
+
+	public void nextVideo() {
+		if (videoIndex < (videos.length - 1)) {
+			videoIndex++;
+		} else {
+			videoIndex = 0;
+		}
+		playVideo(videos[videoIndex]);
+	}
+
+	public void previousVideo() {
+		if (videoIndex > 0) {
+			videoIndex--;
+		} else {
+			videoIndex = videos.length - 1;
+		}
+		playVideo(videos[videoIndex]);
+	}
+
+	/*
+	 * --------------/
+	 */
 
 	/**
 	 * This method will simply play the selected video.
@@ -138,12 +184,6 @@ public class TvActivity extends Activity {
 		}
 	}
 
-	@Override
-	public boolean onCreateOptionsMenu(Menu menu) {
-		getMenuInflater().inflate(R.menu.activity_tv, menu);
-		return true;
-	}
-
 	/**
 	 * A simple inner class used for finding files that end with .mp4 or .avi
 	 * 
@@ -155,8 +195,34 @@ public class TvActivity extends Activity {
 	}
 
 	@Override
+	public boolean onCreateOptionsMenu(Menu menu) {
+		getMenuInflater().inflate(R.menu.activity_tv, menu);
+		return true;
+	}
+
+	@Override
 	protected void onDestroy() {
 		this.videos = null;
 		super.onDestroy();
 	}
 }
+
+/*
+ * THIS METHOD IS DEPRECATED -------------------------
+ * 
+ * This will resize the marker after whichever of height/width is the smallest.
+ * It will then slightly scale the marker down, to keep some free area around
+ * the border.
+ * 
+ * @param size
+ * 
+ * @param scale
+ * 
+ * public void resizeMarker(int height, int width, float scale) { float size =
+ * (height < width) ? height : width; size *= 0.9; int marker = (int) size;
+ * Toast.makeText(this, "Size: " + size + "\nFlingie: " + marker,
+ * Toast.LENGTH_LONG).show(); if (size > 0) {
+ * this.marker.setMinimumHeight(marker); this.marker.setMinimumWidth(marker); }
+ * else { Log.i("Tv Activity", "Trying to set the marker to invalid size: " +
+ * size); }
+ */
