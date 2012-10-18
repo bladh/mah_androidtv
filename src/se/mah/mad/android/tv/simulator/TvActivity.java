@@ -27,7 +27,7 @@ public class TvActivity extends Activity {
 	 * the screen is. Currently, the markers are sized after (screen width +
 	 * screen height) * magic number.
 	 */
-	public static final float MAGICNUMBER = 0.05f;
+	public static final float MAGICNUMBER = 0.15f;
 	private VideoView videoView;
 	private ImageView markerTL;
 	private ImageView markerBR;
